@@ -293,6 +293,11 @@ if(fresh)prep(c)})
 function prep(c){if(!confirm("اشتغل صوتك! تبي أجهّز قصص المناطق الـ13 كلها الحين؟\nتنصرف الكريدتات مرة وحدة، وبعدها تشتغل القصص بدون إنترنت ولا كريدت."))return;
 var ids=T.map(function(t){return t[0]}),i=0,ok=0;(function nx(){if(i>=ids.length){prog.textContent="جهّزت صوتك لـ "+ok+" من 13 قصة";return}
 prog.textContent="أجهّز صوتك… "+(i+1)+" من 13";gen(ids[i++],c).then(function(){ok++;nx()}).catch(function(){nx()})})()}
+function b64(bl){return new Promise(function(res){var r=new FileReader();r.onload=function(){res(String(r.result).split(",")[1])};r.readAsDataURL(bl)})}
+function exportV(btn){var c=cfg()||setup();if(!c)return;var ids=T.map(function(t){return t[0]}),o={},i=0;
+(function nx(){if(i>=ids.length){var bl=new Blob([JSON.stringify(o)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download="voices.json";document.body.appendChild(a);a.click();btn.textContent="تم! أرسل ملف voices.json لـ Claude";return}
+var id=ids[i++];btn.textContent="أجهّز "+i+" من 13…";gen(id,c).then(b64).then(function(x){o[id]=x;nx()}).catch(function(e){btn.textContent="توقف عند "+rn(id)+": "+errMsg(e);if(e&&(e.status===401||e.status===404||e.status===400||e.status===422)){try{localStorage.removeItem(VK)}catch(x){}}})})()}
+if(/[?&]export-voice/.test(location.search)){var xb=document.createElement("button");xb.textContent="جهّز صوتي ونزّل ملف voices.json";xb.style.cssText="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:99;padding:14px 20px;border-radius:14px;border:0;background:#1a7f5a;color:#fff;font:700 16px Tajawal,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.25)";xb.onclick=function(){exportV(xb)};document.body.appendChild(xb)}
 function tts(id,b){if(!window.speechSynthesis){b.textContent="المتصفح ما يدعم الصوت";PB=null;return}
 var u=new SpeechSynthesisUtterance(N[id]),vs=speechSynthesis.getVoices(),v=null;
 for(var i=0;i<vs.length;i++){if(/^ar/i.test(vs[i].lang)){v=vs[i];break}}
