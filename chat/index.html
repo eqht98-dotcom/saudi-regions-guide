@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>مرشدك الثقافي</title>
+<style>
+:root{--bg:#f6f1e7;--card:#fff;--ink:#1f2a24;--mut:#6b6f69;--acc:#1a7f5a;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#141815;--card:#1e2420;--ink:#eef2ee;--mut:#9aa39c}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font-family:Tajawal,"Segoe UI",Tahoma,sans-serif;padding:20px}
+form{background:var(--card);width:100%;max-width:360px;padding:28px 24px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.08);text-align:center}
+h1{font-size:22px;margin:0 0 6px}
+p{color:var(--mut);margin:0 0 20px;font-size:15px}
+input[type=password]{width:100%;font-size:18px;padding:14px;border-radius:12px;border:1.5px solid #cfd5cf;background:transparent;color:inherit;text-align:center;direction:ltr;letter-spacing:.06em}
+input[type=password]:focus{outline:none;border-color:var(--acc)}
+label{display:flex;gap:8px;align-items:center;justify-content:center;margin:14px 0;color:var(--mut);font-size:14px}
+button{width:100%;font:700 17px inherit;font-family:inherit;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#fff;cursor:pointer}
+button:disabled{opacity:.6}
+#msg{min-height:22px;margin-top:12px;font-size:14px;color:var(--bad)}
+</style>
+</head>
+<body>
+<form id="f" autocomplete="off">
+<h1>🔒 مرشدك الثقافي</h1>
+<p>اكتب الرمز السري للدخول</p>
+<input type="password" id="pw" inputmode="numeric" autocomplete="current-password" autocapitalize="off" spellcheck="false" required>
+<label><input type="checkbox" id="rm"> تذكّرني على هذا الجهاز</label>
+<button id="go">دخول</button>
+<div id="msg" role="alert"></div>
+</form>
+<script>
+(function(){
+var K="site_pw",f=document.getElementById("f"),pw=document.getElementById("pw"),rm=document.getElementById("rm"),go=document.getElementById("go"),msg=document.getElementById("msg"),data=null;
+function get(){return data?Promise.resolve(data):fetch("site.enc",{cache:"no-cache"}).then(function(r){if(!r.ok)throw new Error("net");return r.arrayBuffer()}).then(function(b){data=b;return b})}
+function unlock(p){return get().then(function(b){var e=new TextEncoder();
+return crypto.subtle.importKey("raw",e.encode(p),"PBKDF2",false,["deriveKey"]).then(function(km){
+return crypto.subtle.deriveKey({name:"PBKDF2",salt:b.slice(0,16),iterations:600000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"])}).then(function(k){
+return crypto.subtle.decrypt({name:"AES-GCM",iv:b.slice(16,28)},k,b.slice(28))}).then(function(pt){return new TextDecoder().decode(pt)})})}
+function open_(p,save){go.disabled=true;go.textContent="جاري الفتح…";msg.textContent="";
+return unlock(p).then(function(h){try{if(save)localStorage.setItem(K,p)}catch(e){}document.open();document.write(h);document.close()})
+.catch(function(e){go.disabled=false;go.textContent="دخول";
+if(e&&e.message==="net")msg.textContent="تعذّر التحميل. تأكد من الإنترنت وحاول مرة ثانية.";
+else{msg.textContent="الرمز غير صحيح.";try{localStorage.removeItem(K)}catch(x){}pw.select()}})}
+if(!window.crypto||!crypto.subtle){msg.textContent="المتصفح ما يدعم فتح الصفحة. افتحها من رابط https.";go.disabled=true;return}
+f.onsubmit=function(e){e.preventDefault();open_(pw.value.trim(),rm.checked)};
+var s=null;try{s=localStorage.getItem(K)}catch(e){}if(s){rm.checked=true;open_(s,false)}else pw.focus();
+})();
+</script>
+</body>
+</html>
